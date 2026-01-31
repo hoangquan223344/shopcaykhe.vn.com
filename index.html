@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Caykhe Store</title>
+<style>
+body{margin:0;font-family:Arial;background:linear-gradient(120deg,#b30000,#ff4d4d);color:#fff}
+header{background:#8b0000;padding:15px;text-align:center}
+.container{max-width:1000px;margin:auto;padding:20px}
+.card{background:#fff;color:#000;border-radius:10px;padding:15px;margin-bottom:15px}
+button{padding:8px 14px;border:0;border-radius:6px;background:#c40000;color:#fff;cursor:pointer}
+button:hover{opacity:.85}
+input,select{width:100%;padding:6px;margin:5px 0}
+.hidden{display:none}
+.acc{background:#f2f2f2;border-radius:8px;padding:10px}
+.badge{padding:3px 8px;border-radius:6px;font-size:12px}
+.ok{background:#4caf50;color:#fff}
+.no{background:#f44336;color:#fff}
+</style>
+</head>
+
+<body>
+<header>
+  <h1>🎆 Caykhe Store 🎆</h1>
+  <p>Shop Acc Minecraft – Không khí Tết</p>
+</header>
+
+<div class="container">
+
+<!-- LOGIN -->
+<div class="card" id="loginBox">
+  <h3>Đăng nhập</h3>
+  <input id="username" placeholder="Tên người dùng">
+  <button onclick="login()">Vào shop</button>
+  <p>Người mới +10.000đ</p>
+</div>
+
+<!-- USER -->
+<div class="card hidden" id="userBox">
+  <p>👤 <b id="u"></b></p>
+  <p>💰 Số dư: <b id="money"></b> đ</p>
+</div>
+
+<!-- NẠP THẺ -->
+<div class="card hidden">
+  <h3>💳 Nạp thẻ</h3>
+  <select id="loai">
+    <option>Viettel</option>
+    <option>Mobifone</option>
+    <option>Vinaphone</option>
+  </select>
+  <select id="menhgia">
+    <option value="10000">10.000</option>
+    <option value="20000">20.000</option>
+    <option value="50000">50.000</option>
+  </select>
+  <input id="seri" placeholder="Seri">
+  <input id="code" placeholder="Mã thẻ">
+  <button onclick="nap()">Nạp</button>
+</div>
+
+<!-- SHOP -->
+<div class="card hidden">
+  <h3>🛒 Acc Minecraft</h3>
+
+  <h4>NFA</h4>
+  <p>
+    10k–30k <span class="badge no">Không có</span><br>
+    40k–50k <span class="badge ok">Có hàng</span>
+  </p>
+  <button onclick="muaNFA()">Đặt mua NFA</button>
+  <p><i>NFA free: <a href="https://discord.gg/e6Tvxw49" target="_blank">Discord Caykhe</a></i></p>
+
+  <hr>
+
+  <h4>MFA</h4>
+  <p><span class="badge no">Hết hàng</span></p>
+</div>
+
+<!-- ACC INFO -->
+<div class="card hidden" id="accBox">
+  <h3>🎁 Thông tin tài khoản</h3>
+  <div class="acc">
+    Gmail: <b id="accMail"></b><br>
+    Mật khẩu: <b id="accPass"></b>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div class="card hidden" id="adminBox">
+  <h3>👑 ADMIN PANEL</h3>
+  <p id="notify"></p>
+
+  <h4>➕ Stock acc NFA</h4>
+  <input id="aMail" placeholder="Gmail acc">
+  <input id="aPass" placeholder="Mật khẩu">
+  <select id="aPrice">
+    <option value="40000">40k</option>
+    <option value="50000">50k</option>
+  </select>
+  <button onclick="addAcc()">Thêm acc</button>
+
+  <h4>📦 Kho acc</h4>
+  <ul id="stockList"></ul>
+
+  <h4>📜 Đơn hàng</h4>
+  <ul id="orderList"></ul>
+</div>
+
+</div>
+
+<script>
+let user="", money=0;
+
+// ===== DATA =====
+let usedCards = JSON.parse(localStorage.getItem("usedCards")||"[]");
+let stock = JSON.parse(localStorage.getItem("stock")||"[]");
+let orders = JSON.parse(localStorage.getItem("orders")||"[]");
+
+// khởi tạo sẵn 1 acc NFA nếu kho trống
+if(stock.length===0){
+  stock.push({
+    email:"quicktips.mp02@gmail.com",
+    pass:"Mypham1986@",
+    price:40000,
+    sold:false
+  });
+  localStorage.setItem("stock",JSON.stringify(stock));
+}
+
+function save(){
+  localStorage.setItem("money_"+user,money);
+  localStorage.setItem("usedCards",JSON.stringify(usedCards));
+  localStorage.setItem("stock",JSON.stringify(stock));
+  localStorage.setItem("orders",JSON.stringify(orders));
+}
+
+function login(){
+  user=username.value;
+  if(!user) return alert("Nhập tên");
+  money=parseInt(localStorage.getItem("money_"+user)||"10000");
+  loginBox.classList.add("hidden");
+  document.querySelectorAll(".hidden").forEach(e=>e.classList.remove("hidden"));
+  u.innerText=user;
+  update();
+
+  if(user==="admin"){
+    adminBox.classList.remove("hidden");
+    renderAdmin();
+    if(orders.length>0){
+      notify.innerText="📢 Có "+orders.length+" đơn hàng!";
+    }
+  }
+}
+
+function update(){ moneyEl.innerText=money }
+const moneyEl=document.getElementById("money");
+
+function nap(){
+  if(!seri.value||!code.value) return alert("Nhập đủ");
+  const key=loai.value+"-"+seri.value+"-"+code.value;
+  if(usedCards.includes(key)) return alert("Thẻ đã dùng");
+  usedCards.push(key);
+  money+=parseInt(menhgia.value);
+  save(); update();
+  alert("Nạp thành công (demo)");
+}
+
+function muaNFA(){
+  let gia=parseInt(prompt("Nhập giá NFA (40000–50000)"));
+  if(gia<40000||gia>50000) return alert("Giá này không có hàng");
+  if(money<gia) return alert("Không đủ tiền");
+
+  let acc=stock.find(a=>!a.sold && a.price===gia);
+  if(!acc) return alert("Hết acc");
+
+  money-=gia;
+  acc.sold=true;
+
+  orders.push({
+    buyer:user,
+    price:gia,
+    time:new Date().toLocaleString()
+  });
+
+  save(); update();
+  accMail.innerText=acc.email;
+  accPass.innerText=acc.pass;
+  accBox.classList.remove("hidden");
+  alert("Mua thành công!");
+}
+
+// ===== ADMIN =====
+function addAcc(){
+  if(!aMail.value||!aPass.value) return alert("Nhập đủ");
+  stock.push({
+    email:aMail.value,
+    pass:aPass.value,
+    price:parseInt(aPrice.value),
+    sold:false
+  });
+  save(); renderAdmin();
+  alert("Đã thêm acc");
+}
+
+function renderAdmin(){
+  stockList.innerHTML="";
+  stock.forEach(a=>{
+    stockList.innerHTML+=`<li>${a.email} | ${a.price}đ | ${a.sold?"❌ Đã bán":"✔ Còn"}</li>`;
+  });
+
+  orderList.innerHTML="";
+  orders.forEach(o=>{
+    orderList.innerHTML+=`<li>${o.buyer} mua ${o.price}đ (${o.time})</li>`;
+  });
+}
+</script>
+
+</body>
+</html>
